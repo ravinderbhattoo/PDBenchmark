@@ -11,15 +11,28 @@ struct NameParam
     kwargs
 end
 
-struct Test <: PeriDynTest 
-    solver::NameParam
-    geom::NameParam
-    gen_material::NameParam
-    spc_material::NameParam
-    bc::NameParam
-    RM::NameParam
-    f::Function
+function NameParam(name, args::Tuple{Any})
+    NameParam(name, args, Dict())
 end
+
+function Base.length(x::NameParam) 1 end
+function Base.first(x::NameParam) x end
+function Base.length(x::Function) 1 end
+function Base.first(x::Function) x end
+
+struct Test <: PeriDynTest 
+    solver
+    geom
+    gen_material
+    spc_material
+    bc
+    RM
+    f
+    function Test(args...)
+        new([length(i)==1 ? [first(i)] : i for i in args]...)
+    end
+end
+
 
 function run(test::T) where T <: PeriDynTest
     error("No run defined for test of type **$(typeof(test))**")    
@@ -28,43 +41,82 @@ end
 function getproperty_(a, b)
     if typeof(b)==Symbol
         return getproperty(a, b)
-    elseif typeof(b)==Function
+    elseif typeof(b) <: Function
         return b
     else
         error("It should be either a Symbol or a Function.")
     end
 end
 
-function run(test::Test)
-    solver = getproperty(PeriDyn, Solvers[test.solver.name])
-    s_params = test.solver.kwargs
+function run(test::Test; pseudorun=false)
 
-    geom = getproperty_(PDBenchmark, test.geom.name)
-    g_params = test.geom.kwargs   
-    out = create(geom(); g_params...)
-    x, v, y, vol, type = out
+    solver = getproperty(PeriDyn, Solvers[first(test.solver).name])
+    skwargs = first(test.solver).kwargs
+    sargs = first(test.solver).args
 
-    gen_mat_f = getproperty_(PeriDyn, test.gen_material.name)
-    gm_params = test.gen_material.args
-    gen_mat = gen_mat_f(y, v, x, vol, gm_params..., max_neigh=200)
+    geoms = [PDMesh.create(getproperty_(PDBenchmark, x.name)(x.args...); x.kwargs...) for x in test.geom]
 
-    BC = getproperty_(PeriDyn, test.bc.name)(test.bc.args(out)...)
+    gen_mat = [getproperty_(PeriDyn, x.name)(y..., x.args...; x.kwargs...)  for (x, y) in zip(test.gen_material, geoms)]
 
-    spc_mat_f = getproperty_(PeriDyn, test.spc_material.name)
-    sm_params = test.spc_material.args
-    spc_mat = spc_mat_f(sm_params..., gen_mat)
+    spc_mat = [getproperty_(PeriDyn, x.name)(x.args...; x.kwargs...) for x in test.spc_material]
     
-    block_f = getproperty_(PeriDyn, Symbol(replace(string(test.spc_material.name), "Specific"=>"Material")))
-    block = block_f(1, gen_mat, spc_mat)
+    block = [getproperty_(PeriDyn, :PeridynamicsMaterial)(x, y) for (x,y) in zip(gen_mat, spc_mat)]
     
-    rm_f = getproperty_(PeriDyn, test.RM.name)
-    RM = rm_f(test.RM.args..., block; test.RM.kwargs...)
-    
-    env =  PeriDyn.Env(1, [block], [RM], [BC], 1)
+    RM = []
+    for x in test.RM
+        bks = pop!(x.kwargs, :blocks)
+        y = [block[i] for i in bks]
+        push!(RM, getproperty_(PeriDyn, x.name)(x.args..., y...; x.kwargs...))
+    end
 
-    test.f(env)
+    env =  PeriDyn.Env(1, block, RM, Any[], 1.0)
+
+    BC = [getproperty_(PeriDyn, x.name)(x.args[1](env.y)...) for x in test.bc]
+
+    for bc in BC
+        push!(env.boundary_conditions, bc)
+    end
+
+    for ff in test.f
+        ff(env)
+    end
     
-    solver([env],test.solver.args...; test.solver.kwargs...)
+    println("\n\n")
+    println("=========================")
+    println("     Pre Test Report     ")
+    println("=========================")
+    println("\n=========Solver==========")
+    println(solver)    
+    println("\tArgs: ", sargs)    
+    println("\tKwargs: ", skwargs)    
+
+    println("\n====General Materials====")
+    for i in 1:length(gen_mat)
+        println("$i.)")
+        show(gen_mat[i])
+    end    
+   
+    println("\n===Specific Materials ===")
+    for i in length(spc_mat)
+        println("$i.)")
+        show(spc_mat[i])
+    end    
+   
+    println("\n===Boundary Conditions===")
+    for i in 1:length(BC)
+        println("$i.)")
+        show(BC[i])
+    end    
+
+    println("\n====Repulsive Models ====")
+    for i in 1:length(RM)
+        println("$i.)")
+        show(RM[i])
+    end    
+   
+    if ~pseudorun
+        solver([env], sargs...; skwargs...)
+    end
 
     return env    
 end
