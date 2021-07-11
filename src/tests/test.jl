@@ -48,8 +48,7 @@ function getproperty_(a, b)
     end
 end
 
-function run(test::Test; pseudorun=false)
-
+function stage!(test::Test)
     solver = getproperty(PeriDyn, Solvers[first(test.solver).name])
     skwargs = first(test.solver).kwargs
     sargs = first(test.solver).args
@@ -71,7 +70,7 @@ function run(test::Test; pseudorun=false)
 
     env =  PeriDyn.Env(1, block, RM, Any[], 1.0)
 
-    BC = [getproperty_(PeriDyn, x.name)(x.args[1](env.y)...) for x in test.bc]
+    BC = [getproperty_(PeriDyn, x.name)(x.args[1](env.y)...; x.kwargs...) for x in test.bc]
 
     for bc in BC
         push!(env.boundary_conditions, bc)
@@ -114,8 +113,15 @@ function run(test::Test; pseudorun=false)
         show(RM[i])
     end    
    
+    return env, (env_) -> solver([env_], sargs...; skwargs...)
+
+end
+
+function run!(test::Test; pseudorun=false)
+
+    env, env_solve! = stage!(test)
     if ~pseudorun
-        solver([env], sargs...; skwargs...)
+        env_solve!(env)
     end
 
     return env    
