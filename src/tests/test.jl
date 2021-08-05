@@ -28,8 +28,12 @@ struct Test <: PeriDynTest
     bc
     RM
     f
-    function Test(args...)
-        new([length(i)==1 ? [first(i)] : i for i in args]...)
+    blocknames
+    function Test(args...; names=nothing)
+        if names === nothing
+            names = ["Default name" for i in 1:length(args[3])]
+        end    
+        new([length(i)==1 ? [first(i)] : i for i in args]..., names)
     end
 end
 
@@ -59,7 +63,7 @@ function stage!(test::Test)
 
     spc_mat = [getproperty_(PeriDyn, x.name)(x.args...; x.kwargs...) for x in test.spc_material]
     
-    block = [getproperty_(PeriDyn, :PeridynamicsMaterial)(x, y) for (x,y) in zip(gen_mat, spc_mat)]
+    block = [getproperty_(PeriDyn, :PeridynamicsMaterial)(x, y; name=name) for (x,y, name) in zip(gen_mat, spc_mat, test.blocknames)]
     
     RM = []
     for x in test.RM
@@ -70,7 +74,7 @@ function stage!(test::Test)
 
     env =  PeriDyn.Env(1, block, RM, Any[], 1.0)
 
-    BC = [getproperty_(PeriDyn, x.name)(x.args[1](env.y)...; x.kwargs...) for x in test.bc]
+    BC = [getproperty_(PeriDyn, x.name)(x.args[1](env)...; x.kwargs...) for x in test.bc]
 
     for bc in BC
         push!(env.boundary_conditions, bc)
@@ -92,12 +96,14 @@ function stage!(test::Test)
     println("\n====General Materials====")
     for i in 1:length(gen_mat)
         println("$i.)")
+        println("Block name: $(test.blocknames[i])")
         show(gen_mat[i])
     end    
    
     println("\n===Specific Materials ===")
-    for i in length(spc_mat)
+    for i in 1:length(spc_mat)
         println("$i.)")
+        println("Block name: $(test.blocknames[i])")
         show(spc_mat[i])
     end    
    

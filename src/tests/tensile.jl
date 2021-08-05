@@ -7,7 +7,7 @@ end
 function TensileBar(; gen_mat=nothing, spc_mat=nothing, resolution=0.1, solver_=:qs, notched=false, file_prefix="TensileBar")
     if solver_ in [:qs]
         Steps = 10
-        sargs = (Steps, 0.01)
+        sargs = (Steps, 0.0001)
         skwargs = Dict(:max_iter=>500)
         fwf = 1
     else
@@ -28,14 +28,14 @@ function TensileBar(; gen_mat=nothing, spc_mat=nothing, resolution=0.1, solver_=
     geom = PDBenchmark.NameParam(obj, (), Dict(:resolution=>reso))
 
     if solver_ in [:qs]
-        bc_f1 = x -> (vec(x[1,:] .<= 01.0),  [-0.01, 0, 0])
-        bc_f2 = x -> (vec(x[1,:] .>= 11.0), [0.01, 0, 0])
+        bc_f1 = env -> (vec(env.y[1,:] .<= 01.0),  [-0.01, 0, 0])
+        bc_f2 = env -> (vec(env.y[1,:] .>= 11.0), [0.01, 0, 0])
         bc = [  PDBenchmark.NameParam(:MoveBC, (bc_f1,)), 
                 PDBenchmark.NameParam(:MoveBC, (bc_f2,)),
                 ]
     else
-        bc_f1 = x -> (vec(x[1,:] .<= 1.0),  [-0.0001, 0, 0])
-        bc_f2 = x -> (vec(x[1,:] .>= 11.0), [0.0001, 0, 0])
+        bc_f1 = env -> (vec(env.y[1,:] .<= 1.0),  [-0.0001, 0, 0])
+        bc_f2 = env -> (vec(env.y[1,:] .>= 11.0), [0.0001, 0, 0])
         bc = [PDBenchmark.NameParam(:MoveBC, (bc_f1,)), PDBenchmark.NameParam(:MoveBC, (bc_f2,))]
     end
     RM = [PDBenchmark.NameParam(:LinearRepulsionModel, (100.0,), Dict(:blocks=>(1,), :distanceX=>3, :max_neighs=>200))]
