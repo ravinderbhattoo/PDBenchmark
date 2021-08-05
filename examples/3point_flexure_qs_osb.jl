@@ -10,16 +10,16 @@ K = Es/3/(1-2nu)
 G = Es/2/(1+nu)
 rho = 1000.0
 cs = 0.15
-reso = 0.05
+reso = 0.1
 horizon = 3*reso
 
 C = 18K/(pi*horizon^4)
 
 gen_mat = PDBenchmark.NameParam(:GeneralMaterial, (horizon), Dict(:max_neigh=>200))
 
-spc_mat = PDBenchmark.NameParam(:BondBasedSpecific, ([C], [cs], [rho], ), Dict())
+spc_mat = PDBenchmark.NameParam(:OrdinaryStateBasedSpecific, ([K], [G], [cs], [rho], ), Dict())
 
-test = PDBenchmark.TensileBar(;gen_mat=gen_mat, spc_mat=spc_mat, resolution=reso, solver_=:qs, file_prefix="TensileBarBB_qs")
+test = PDBenchmark._3PointBending(;gen_mat=gen_mat, spc_mat=spc_mat, resolution=reso, solver_=:qs, file_prefix="Flexure3PointOSB_qs")
 
 env = PDBenchmark.run!(test)
 
@@ -31,4 +31,4 @@ using Plots
 plot(x, y, marker=4, linewidth=1, label=raw"F_x")
 xlabel!("Displacement")
 ylabel!("Force")
-savefig("./output/bb_qs.png")
+savefig("./output/osb_qs.png")
