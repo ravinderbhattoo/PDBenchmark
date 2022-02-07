@@ -4,7 +4,7 @@ function TensileNotchedBar(args...; kwargs...)
     TensileBar(args...; notched=true, kwargs...)
 end
 
-function TensileBar(; gen_mat=nothing, spc_mat=nothing, resolution=0.1, solver_=:qs, notched=false, file_prefix="TensileBar")
+function TensileBar(; gen_mat=nothing, spc_mat=nothing, resolution=0.1, solver_=:qs, notched=false, out_dir="TensileBar")
     if solver_ in [:qs]
         Steps = 10
         sargs = (Steps, 0.0001)
@@ -16,7 +16,7 @@ function TensileBar(; gen_mat=nothing, spc_mat=nothing, resolution=0.1, solver_=
         skwargs = Dict()
         fwf = 10
     end
-    solver = PDBenchmark.NameParam(solver_, sargs, Dict(:filewrite_freq=>fwf, :neigh_update_freq=>100, :file_prefix=>file_prefix, :start_at=>0, skwargs...))
+    solver = PDBenchmark.NameParam(solver_, sargs, Dict(:filewrite_freq=>fwf, :neigh_update_freq=>100, :out_dir=>out_dir, :start_at=>0, skwargs...))
     
     if notched
         obj = () -> NotchedBar(bounds=[0 12; 0 1; 0 1], notch=[5.75 6.25; 0.0 0.25; 0.0 1.0])

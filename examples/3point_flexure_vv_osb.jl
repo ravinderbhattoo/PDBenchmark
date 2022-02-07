@@ -19,7 +19,7 @@ gen_mat = PDBenchmark.NameParam(:GeneralMaterial, (horizon), Dict(:max_neigh=>20
 
 spc_mat = PDBenchmark.NameParam(:OrdinaryStateBasedSpecific, ([K], [G], [cs], [rho], ), Dict())
 
-test = PDBenchmark._3PointBending(;gen_mat=gen_mat, spc_mat=spc_mat, resolution=reso, solver_=:vv, file_prefix="Flexure3PointOSB_vv")
+test = PDBenchmark._3PointBending(;gen_mat=gen_mat, spc_mat=spc_mat, resolution=reso, solver_=:vv, out_dir="Flexure3PointOSB_vv")
 
 env = PDBenchmark.run!(test)
 

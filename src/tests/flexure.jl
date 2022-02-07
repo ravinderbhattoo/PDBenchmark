@@ -12,7 +12,7 @@ function _4PointBending(args...; kwargs...)
     _3PointBending(args...; _4point=true, kwargs...)
 end
 
-function _3PointBending(; gen_mat=nothing, spc_mat=nothing, resolution=0.1, solver_=:qs, notched=false, _4point=true, file_prefix="TensileBar")
+function _3PointBending(; gen_mat=nothing, spc_mat=nothing, resolution=0.1, solver_=:qs, notched=false, _4point=true, out_dir="TensileBar")
     if solver_ in [:qs]
         Steps = 100
         sargs = (Steps, 0.01)
@@ -24,7 +24,7 @@ function _3PointBending(; gen_mat=nothing, spc_mat=nothing, resolution=0.1, solv
         skwargs = Dict()
         fwf = 10
     end
-    solver = PDBenchmark.NameParam(solver_, sargs, Dict(:filewrite_freq=>fwf, :file_prefix=>file_prefix, :start_at=>0, skwargs...))
+    solver = PDBenchmark.NameParam(solver_, sargs, Dict(:filewrite_freq=>fwf, :out_dir=>out_dir, :start_at=>0, skwargs...))
     
     geom = []
     reso = resolution

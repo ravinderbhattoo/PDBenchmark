@@ -59,7 +59,7 @@ function stage!(test::Test)
 
     geoms = [PDMesh.create(getproperty_(PDBenchmark, x.name)(x.args...); x.kwargs...) for x in test.geom]
 
-    gen_mat = [getproperty_(PeriDyn, x.name)(y..., x.args...; x.kwargs...)  for (x, y) in zip(test.gen_material, geoms)]
+    gen_mat = [getproperty_(PeriDyn, x.name)(y, x.args...; x.kwargs...)  for (x, y) in zip(test.gen_material, geoms)]
 
     spc_mat = [getproperty_(PeriDyn, x.name)(x.args...; x.kwargs...) for x in test.spc_material]
     
@@ -119,15 +119,18 @@ function stage!(test::Test)
         show(RM[i])
     end    
    
-    return env, (env_) -> solver([env_], sargs...; skwargs...)
+    function func(env_; append_date=false)
+        simulate([env_], sargs...; solver=first(test.solver).name, append_date=append_date, skwargs...)
+    end
+    return env, func
 
 end
 
-function run!(test::Test; pseudorun=false)
+function run!(test::Test; append_date=false, pseudorun=false)
 
     env, env_solve! = stage!(test)
     if ~pseudorun
-        env_solve!(env)
+        env_solve!(env, append_date=append_date)
     end
 
     return env    

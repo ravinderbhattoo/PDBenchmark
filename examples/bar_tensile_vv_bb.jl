@@ -19,7 +19,7 @@ gen_mat = PDBenchmark.NameParam(:GeneralMaterial, (horizon), Dict(:max_neigh=>20
 
 spc_mat = PDBenchmark.NameParam(:BondBasedSpecific, ([C], [cs], [rho], ), Dict())
 
-test = PDBenchmark.TensileBar(;gen_mat=gen_mat, spc_mat=spc_mat, resolution=reso, solver_=:vv, file_prefix="TensileBarBB_vv")
+test = PDBenchmark.TensileBar(;gen_mat=gen_mat, spc_mat=spc_mat, resolution=reso, solver_=:vv, out_dir="TensileBarBB_vv")
 
 env = PDBenchmark.run!(test)
 
