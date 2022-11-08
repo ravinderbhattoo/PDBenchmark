@@ -15,5 +15,5 @@ end
 include("./tests/test.jl")
 include("./tests/standardtests.jl")
 include("./geom/geom.jl")
-# include("./standard_simulations/standard_simulations.jl")
+include("./standard_simulations/standard_simulations.jl")
 end
