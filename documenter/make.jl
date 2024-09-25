@@ -44,7 +44,6 @@ format = Documenter.HTML(;
 function doit()
     makedocs(sitename="PDBenchmark",
         build = "../docs",
-        remotes = nothing,
         format = format,
         modules=[PDBenchmark],
         pages = [
