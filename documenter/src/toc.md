@@ -2,9 +2,8 @@
 
 ```@contents
 Pages = [
-            "pdbench.md",
-            "examples.md",
-            "index.md", 
+            "index.md",
+            "list.md",
             "autodocs.md"
         ]
 Depth = 3
